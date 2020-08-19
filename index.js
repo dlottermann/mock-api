@@ -10,6 +10,24 @@ const userdb = process.env.USERDB
 const passwd = process.env.PASSWD
 
 
+const authorSchema = new mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
+    firstname: String,
+    lastname: String,
+    created: { 
+      type: Date,
+      default: Date.now
+  }
+})
+
+const Author = mongoose.model('Author', authorSchema);
+
+let author = new Author ({
+      _id: new mongoose.Types.ObjectId(), 
+      firstName: 'diego',
+      lastName: 'lottermann'
+});
+
 
 const uri = `mongodb+srv://${userdb}:${passwd}@supermarketapp.gyn7i.mongodb.net/${dbname}?retryWrites=true&w=majority`;
 
@@ -18,14 +36,22 @@ mongoose.connect(uri, { useUnifiedTopology: true, useNewUrlParser: true });
 
 const connection = mongoose.connection;
 
-connection.once("open", function() {
+connection.once("open", function(err) {
+  if (err) throw err;
   console.log("MongoDB database connection established successfully");
 });
 
 
 
-app.get('/', function(req, res) {
+  app.get('/', function(req, res) {
     res.send('Olá Mundo connectado!');
+    
+    author.save(function(err) {
+      if (err) throw err;
+       
+      console.log('Author successfully saved.');
+    })
+
   });
   
   app.listen(port, function() {
