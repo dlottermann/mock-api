@@ -1,6 +1,50 @@
 const express = require("express");
 const router = express.Router();
 const SuperMarket = require("../models/supermarket");
+const AWS = require('aws-sdk');
+const { v4: uuidv4 } = require('uuid');
+const dotenv = require('dotenv');
+const multer = require('multer')
+
+
+dotenv.config();
+
+const s3 = new AWS.S3({
+  accessKeyId: process.env.ID,
+  secretAccessKey: process.env.SECRET
+});
+
+
+var storage = multer.memoryStorage();
+var upload = multer({ storage: storage });
+
+router.post("/file", upload.single("logo"), (req, res, next) => {
+  try {
+    
+    const fileName = req.file
+    const ext = fileName.originalname.split('.')
+  
+  
+    const params = {
+        Bucket: process.env.BUCKET,
+        Key: `${uuidv4()}.${ext[ext.length-1]}`, // File name you want to save as in S3
+        Body: fileName.buffer,
+        ContentType: fileName.mimetype,
+        ACL: 'public-read'
+    };
+
+
+    s3.upload(params, function(err, data) {
+      if (err) {
+          throw err;
+      }
+      res.send(data.Location);
+  });
+    
+  } catch (error) {
+    res.status(400).send({ error: "Error upload: " + error });
+  }
+});
 
 router.get("/", async (req, res) => {
   try {
